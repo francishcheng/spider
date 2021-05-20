@@ -1,5 +1,7 @@
 import scrapy
 from datetime import datetime
+from ..settings import DB, TABLE
+import pymongo
 import time
 import re
 from ..items import PachongItem
@@ -11,6 +13,9 @@ class SpiderSpider(scrapy.Spider):
     start_urls = ['https://www.helmenyun.cn/index.php/DataManage/data_list/{page}']
     data_list_url = 'https://www.helmenyun.cn/index.php/DataManage/data_list/{page}'
     detail_url = 'https://www.helmenyun.cn/index.php/DataManage/data_detail?sql={vendor}&SNcode={SNcode}&sTime={sTime}&RecordID={RecordID}'
+    client = pymongo.MongoClient('localhost')
+    db = client[DB]
+    table = db[TABLE]
     def start_requests(self):
         
         for url in self.start_urls:
@@ -34,12 +39,19 @@ class SpiderSpider(scrapy.Spider):
             item['sTime'] = tr.xpath('./td[@class="sTime"]/text()').get(default='')
             item['Concentration'] = tr.xpath('./td[@class="Concentration"]/text()').get(default='')
             item['Judge'] = tr.xpath('./td[@class="Judge"]/text()').get(default='') 
-            item['CValue'] = tr.xpath('./td[@class="CValue"]/text()').get(default='') 
-            item['TValue'] = tr.xpath('./td[@class="TValue"]/text()').get(default='')
+            # item['CValue'] = tr.xpath('./td[@class="CValue"]/text()').get(default='') 
+            # item['TValue'] = tr.xpath('./td[@class="TValue"]/text()').get(default='')
             item['SNcode'] = tr.xpath('./td[@class="check-bight"]/input/@value').get(default='')   
             item['sTimeNumber'] = tr.xpath('./td[@class="sTime"]/input/@value').get(default='')
+            # item['serial_number'] = tr.xpath('')
             # res.append(item)
-            yield scrapy.Request(self.detail_url.format(vendor=self.vendor, SNcode=item['SNcode'], sTime=item['sTimeNumber'], RecordID=item['RecordID']), callback=self.parse_detail, meta={'item':item}, dont_filter=True)    
+            
+            query = {
+               'RecordID' : item['RecordID'] 
+            }
+            res = self.table.find_one(query)
+            if res is None:
+                yield scrapy.Request(self.detail_url.format(vendor=self.vendor, SNcode=item['SNcode'], sTime=item['sTimeNumber'], RecordID=item['RecordID']), callback=self.parse_detail, meta={'item':item}, dont_filter=True)    
         # print('RecordIDs', RecordIDs)
         # print('ItemIDs', ItemIDs)
         # print('BatchIDs', BatchIDs)
@@ -71,9 +83,35 @@ class SpiderSpider(scrapy.Spider):
         res = re.search(pattern, script)
         points = res.groups(0)[0]
         item['points'] = points        
-        item['address'] = response.xpath('./span[@class="address"]/text()').get(default='')   
-        item['data_bight']  = response.xpath('//div[@class="data-bight"]/p').get(default='')
+        item['address'] = response.xpath('//span[@class="address"]/text()').get(default='')   
+        # item['data_bight']  = response.xpath('//div[@class="data-bight"]/p').get(default='')
         item['create_time'] = datetime.now()
+        item['gender'] = response.xpath('/html/body/div/div/div[1]/div[3]/span[2]/text()').get(default='')
+        item['place'] = response.xpath('/html/body/div/div/div[3]/div[1]/span[2]/text()').get(default='')
+        data_header = response.xpath("//div[@class='data-header']")[0]
+        cons1 = data_header.xpath('//div[@class="row" and position()=4]//div[position()=2]//span[position()=2]/text()').get(default='')
+        cons2 = data_header.xpath('//div[@class="row" and position()=5]//div[position()=2]//span[position()=2]/text()').get(default='')
+        cons3 = data_header.xpath('//div[@class="row" and position()=6]//div[position()=2]//span[position()=2]/text()').get(default='')
+        conclusion1 = data_header.xpath('//div[@class="row" and position()=4]//div[position()=4]//span[position()=2]/text()').get(default='')
+        conclusion2 = data_header.xpath('//div[@class="row" and position()=5]//div[position()=4]//span[position()=2]/text()').get(default='')
+        conclusion3 = data_header.xpath('//div[@class="row" and position()=6]//div[position()=4]//span[position()=2]/text()').get(default='')
+        item['cons1'] = cons1
+        item['cons2'] = cons2
+        item['cons3'] = cons3
+        item['conclusion1'] = conclusion1
+        item['conclusion2'] = conclusion2
+        item['conclusion3'] = conclusion3
+        data_bight  = response.xpath('//div[@class="data-bight"]/p')
+        CValue = data_bight.xpath('//span[@class="CValue"]/text()').get(default='')
+        TValue1 = data_bight.xpath('//span[@class="TValue" and position()=4]/text()').get(default='')
+        TValue1 = TValue1.strip()
+        TValue2 = data_bight.xpath('//span[@class="TValue" and position()=6]/text()').get(default='')
+        TValue3 = data_bight.xpath('//span[@class="TValue" and position()=8]/text()').get(default='')
+        item['CValue']  = CValue
+        item['TValue1'] = TValue1
+        item['TValue2'] = TValue2
+        item['TValue3'] = TValue3
+        print(item)
         yield item
 
         

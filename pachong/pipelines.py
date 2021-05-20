@@ -21,6 +21,16 @@ class PachongPipeline:
 
     def process_item(self, item, spider):
         # print(item)
-        self.table.insert(dict(item)) 
+        query = {
+           'RecordID' : item['RecordID'] 
+        }
+        res = self.table.find_one(query)
+        if res is None:
+            try:
+                x = self.table.update_one(query, {'$set':dict(item)}, upsert=True)
+        # self.table.insert(dict(item)) 
+            except:
+                print('e')
+                print('error updating db')
         return item
 

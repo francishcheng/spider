@@ -8,8 +8,8 @@
 #     https://docs.scrapy.org/en/latest/topics/spider-middleware.html
 # mongodb settings
 DB = 'test'
-TABLE = 'hel'
-LOG_LEVEL = 'INFO'
+TABLE = 'helmen'
+LOG_LEVEL = 'ERROR'
 BOT_NAME = 'pachong'
 
 MAX_PAGE = 10
