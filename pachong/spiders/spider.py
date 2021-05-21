@@ -111,7 +111,7 @@ class SpiderSpider(scrapy.Spider):
         item['TValue1'] = TValue1
         item['TValue2'] = TValue2
         item['TValue3'] = TValue3
-        print(item)
+        # print(item)
         yield item
 
         
