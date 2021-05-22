@@ -10,6 +10,7 @@
 DB = 'test'
 TABLE = 'helmen'
 LOG_LEVEL = 'ERROR'
+IMG_SAVE_PATH = './'
 BOT_NAME = 'pachong'
 
 MAX_PAGE = 10

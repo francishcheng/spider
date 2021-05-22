@@ -199,7 +199,7 @@ while True:
                         ###
                         msg += '\n\n\n---------------------------------------------\n\n\n'
                         msg += ' \n\n '.join([str(i) for i in data.values()])
-                        msg += '\n\n![screenshot](http://58.87.111.39/img/{rc_id}.jpg)\n\n\n'.format(
+                        msg += '\n\n![screenshot](http://58.87.111.39/img/{TABLE}_{RecordID}.png)\n\n\n'.format(
                             rc_id=rc_id)
                         msg += '\n\n\n---------------------------------------------\n\n\n'
                         try:

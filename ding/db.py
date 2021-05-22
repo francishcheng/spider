@@ -8,6 +8,7 @@ import json
 import time
 from datetime import datetime as dt
 import datetime
+TABLE = 'helmen'
 client = pymongo.MongoClient('localhost')
 db = client['test']
 table = db['helmen']
@@ -30,9 +31,7 @@ class dingTalk():
         }
         data = {
             "msgtype": "markdown",
-            # "markdown": markdown,
             "markdown": {
-                # "title": "检测结果",
                 "title": "test",
                 "text": markdown_text
 
@@ -54,13 +53,23 @@ while True:
     now = dt.now()
     five_mins_ago = now + datetime.timedelta(minutes=-6)
     query = {"create_time": {"$gt":five_mins_ago, "$lt":now}}
-    results = table.find(query)
-    for result in results:
-        if result['RecordID'] not in previous_RecordID:
-            print(result['RecordID'])
-            l.append(result['RecordID']) 
-            msg += result['RecordID'] + ','
+    items = table.find(query)
+    
+    for item in items:
+        item = dict(item)
+        if item['RecordID'] not in previous_RecordID:
+            l.append(item['RecordID']) 
+            values = []
+            for key in item.keys():
+                if key!='points' and  key!='create_time':
+                    values.append(item[key])
+            # print(values)        
+            msg += '\n\n\n---------------------------------------------\n\n\n'
+            msg += ' \n\n '.join([str(i) for i in values])
+            msg += '\n\n![screenshot](http://58.87.111.39/img/{TABLE}_{RecordID}.png)\n\n\n'.format(TABLE=TABLE, RecordID=item['RecordID'])
+            msg += '\n\n\n---------------------------------------------\n\n\n'
     previous_RecordID = l
+    print(msg)
     dingtalk.msg(msg)
     print("sleep 5 mins")
     time.sleep(5*60)

@@ -1,4 +1,7 @@
-from .settings import DB, TABLE
+from .settings import DB, TABLE, IMG_SAVE_PATH
+import matplotlib.pyplot as plt
+from itemadapter import ItemAdapter
+import pymongo
 # Define your item pipelines here
 #
 # Don't forget to add your pipeline to the ITEM_PIPELINES setting
@@ -6,8 +9,6 @@ from .settings import DB, TABLE
 
 
 # useful for handling different item types with a single interface
-from itemadapter import ItemAdapter
-import pymongo
 
 
 class PachongPipeline:
@@ -28,9 +29,15 @@ class PachongPipeline:
         if res is None:
             try:
                 x = self.table.update_one(query, {'$set':dict(item)}, upsert=True)
+                fig, ax = plt.subplots()
+                points = item['points']
+                points = [int(point) for point in points.split(',')[:-1]]
+                ax.plot(range(len(points)), points)                 
+                plt.savefig('{IMG_SAVE_PATH}{TABLE}_{RecordID}.png'.format(IMG_SAVE_PATH=IMG_SAVE_PATH, TABLE=TABLE, RecordID=item['RecordID']))
+                
         # self.table.insert(dict(item)) 
-            except:
-                print('e')
+            except Exception as e:
+                print(e)
                 print('error updating db')
         return item
 
