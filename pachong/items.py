@@ -37,4 +37,4 @@ class PachongItem(scrapy.Item):
     conclusion2 = scrapy.Field()
     conclusion3 = scrapy.Field()
     conclusion1 = scrapy.Field()
-
+    judge_res = scrapy.Field()

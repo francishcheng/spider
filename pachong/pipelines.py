@@ -1,7 +1,10 @@
 from .settings import DB, TABLE, IMG_SAVE_PATH
 import matplotlib.pyplot as plt
 from itemadapter import ItemAdapter
+import numpy as np
+import pandas as pd
 import pymongo
+from .Judge import judge_func
 # Define your item pipelines here
 #
 # Don't forget to add your pipeline to the ITEM_PIPELINES setting
@@ -28,7 +31,18 @@ class PachongPipeline:
         res = self.table.find_one(query)
         if res is None:
             try:
+                # judge function
+                points = item['points']
+                points = [int(i) for i in points.split(',')[:-1]]
+                points = np.array(points)
+                C_ygz = int(item['CValue'])
+                Ce = item['sBatchCode']
+                xm = item['sItemName']
+                judge_res = judge_func(points, Ce, C_ygz, xm)
+                item['judge_res'] = int(judge_res)
+                # save data            
                 x = self.table.update_one(query, {'$set':dict(item)}, upsert=True)
+
                 fig, ax = plt.subplots()
                 points = item['points']
                 points = [int(point) for point in points.split(',')[:-1]]

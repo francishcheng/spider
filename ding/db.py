@@ -1,3 +1,6 @@
+from Judge import judge_func
+import numpy as np
+import pandas as pd
 import pymongo
 import requests
 import hmac
@@ -61,15 +64,18 @@ while True:
             l.append(item['RecordID']) 
             values = []
             for key in item.keys():
-                if key!='points' and  key!='create_time':
+                if key!='points' and  key!='create_time' and key!='judge_res':
                     values.append(item[key])
             # print(values)        
+    
             msg += '\n\n\n---------------------------------------------\n\n\n'
             msg += ' \n\n '.join([str(i) for i in values])
             msg += '\n\n![screenshot](http://58.87.111.39/img/{TABLE}_{RecordID}.png)\n\n\n'.format(TABLE=TABLE, RecordID=item['RecordID'])
             msg += '\n\n\n---------------------------------------------\n\n\n'
+            # judge      
+            msg += '判断结果:' + '无效' if int(item['judge_res']) == 0 else '有效'
     previous_RecordID = l
-    print(msg)
+    # print(msg)
     dingtalk.msg(msg)
     print("sleep 5 mins")
     time.sleep(5*60)
