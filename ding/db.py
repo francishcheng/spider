@@ -44,6 +44,7 @@ class dingTalk():
             }
         }
         json_data = json.dumps(data)
+        print(json_data)
         timestamp, sign = self.get_params()
         print(timestamp, sign)
         response = requests.post(
@@ -73,10 +74,12 @@ while True:
             msg += '\n\n![screenshot](http://58.87.111.39/img/{TABLE}_{RecordID}.png)\n\n\n'.format(TABLE=TABLE, RecordID=item['RecordID'])
             msg += '\n\n\n---------------------------------------------\n\n\n'
             # judge      
-            msg += '判断结果:' + '无效' if int(item['judge_res']) == 0 else '有效'
-    previous_RecordID = l
-    # print(msg)
-    dingtalk.msg(msg)
+            judge_res = '无效' if int(item['judge_res']) == 0 else '有效'
+            msg += '判断结果:' + judge_res  
+    print('messagea:')
+    print(msg)
+    response = dingtalk.msg(msg)
+    print(response.text)
     print("sleep 5 mins")
     time.sleep(5*60)
      
