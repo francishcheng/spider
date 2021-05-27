@@ -1,0 +1,14 @@
+[database]
+DB = test
+TABLE = helmen
+
+[spider]
+PHPSESSID = bk5ljnmepq7dasf7771v00lk34
+domain = https://www.helmenyun.cn
+vendor = vendor298
+[image]
+IMG_SAVE_PATH = ./
+
+[dingtalk]
+access_token = 5bb414bbd12ccb74196b58cb21893c3a36743889dc78e0ef2a6c5d2888a631d9
+secret = SEC3cf584e906ff16ca465b26e7324eba304a8f18f9e88171c4e6c4afcb7cb96326

@@ -1,11 +1,21 @@
 from django.shortcuts import render
 from django.http import HttpResponse
 import pymongo
+import os
+import configparser
+import pathlib
 # Create your views here.
 def download_view(request):
+    current_parent_dir = pathlib.Path(__file__).parent.parent.parent.absolute()
+    CONFIG_FILE_PATH = os.path.join(current_parent_dir, 'conf.ini')
+    config = configparser.ConfigParser()
+    config.read(CONFIG_FILE_PATH)
+    TABLE = config.get('database', 'TABLE')
+    DB = config.get('database', 'DB')
+
     client = pymongo.MongoClient('localhost')
-    db = client['test']
-    table = db['hel']
+    db = client[DB]
+    table = db[TABLE]
     collections = table.find({})
     with open('test.csv','w', encoding='utf-8') as f:
         f.write('序号,仪器序列号,项目号,批次号,样品编号,项目名称,批次名称,测试时间,浓度1,结论1,C值,T1值,浓度2,浓度3,结论2,结论3,T2值,T3值,省市编号,详细地址\n')

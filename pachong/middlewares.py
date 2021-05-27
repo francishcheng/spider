@@ -1,3 +1,6 @@
+import os
+import configparser
+import pathlib
 # Define here the models for your spider middleware
 #
 # See documentation in:
@@ -60,7 +63,14 @@ class PachongDownloaderMiddleware:
     # Not all methods need to be defined. If a method is not defined,
     # scrapy acts as if the downloader middleware does not modify the
     # passed objects.
-
+    current_parent_dir = pathlib.Path(__file__).parent.parent.absolute()
+    CONFIG_FILE_PATH = os.path.join(current_parent_dir, 'conf.ini')
+    config = configparser.ConfigParser()
+    config.read(CONFIG_FILE_PATH)
+    PHPSESSID = config.get('spider', 'PHPSESSID')
+    cookies = {
+     'PHPSESSID': PHPSESSID
+    }
     @classmethod
     def from_crawler(cls, crawler):
         # This method is used by Scrapy to create your spiders.
@@ -69,10 +79,11 @@ class PachongDownloaderMiddleware:
         return s
 
     def process_request(self, request, spider):
-        cookies = {
-         'PHPSESSID':'bk5ljnmepq7dasf7771v00lk34'
-        }
-        request.cookies.update(cookies)
+        # print(self.PHPSESSID)
+        # cookies = {
+        #  'PHPSESSID': 'bk5ljnmepq7dasf7771v00lk34'
+        # }
+        request.cookies.update(self.cookies)
         return None
 
     def process_response(self, request, response, spider):

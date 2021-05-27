@@ -1,4 +1,5 @@
 import scrapy
+import json
 from datetime import datetime
 from ..settings import DB, TABLE
 import pymongo
@@ -6,13 +7,29 @@ import time
 import re
 from ..items import PachongItem
 from ..settings import MAX_PAGE 
+import os
+import configparser
+import pathlib
+post_img_url = 'http://58.87.111.39:5555/items/'
+
 class SpiderSpider(scrapy.Spider):
+    current_parent_dir = pathlib.Path(__file__).parent.parent.parent.absolute()
+    CONFIG_FILE_PATH = os.path.join(current_parent_dir, 'conf.ini')
+    config = configparser.ConfigParser()
+    config.read(CONFIG_FILE_PATH)
+    
     name = 'spider'
-    # allowed_domains = ['helmenyun.cn']
-    vendor = 'vendor298'
-    start_urls = ['https://www.helmenyun.cn/index.php/DataManage/data_list/{page}']
-    data_list_url = 'https://www.helmenyun.cn/index.php/DataManage/data_list/{page}'
-    detail_url = 'https://www.helmenyun.cn/index.php/DataManage/data_detail?sql={vendor}&SNcode={SNcode}&sTime={sTime}&RecordID={RecordID}'
+    domain = config.get('spider', 'domain')
+    vendor = config.get('spider', 'vendor')
+
+    # start_urls = ['https://www.helmenyun.cn/index.php/DataManage/data_list/{page}']
+    # data_list_url = 'https://www.helmenyun.cn/index.php/DataManage/data_list/{page}'
+    # detail_url = 'https://www.helmenyun.cn/index.php/DataManage/data_detail?sql={vendor}&SNcode={SNcode}&sTime={sTime}&RecordID={RecordID}'
+
+    start_urls = [domain + '/index.php/DataManage/data_list/{page}']
+    data_list_url =domain + '/index.php/DataManage/data_list/{page}'
+    detail_url = domain + '/index.php/DataManage/data_detail?sql={vendor}&SNcode={SNcode}&sTime={sTime}&RecordID={RecordID}'
+
     client = pymongo.MongoClient('localhost')
     db = client[DB]
     table = db[TABLE]
@@ -69,8 +86,8 @@ class SpiderSpider(scrapy.Spider):
         if page<=MAX_PAGE:
             yield scrapy.Request(self.data_list_url.format(page=page+1), callback=self.parse, dont_filter=True) 
         else:
-            print('sleep 5min')
-            time.sleep(5*60)
+            print('sleep 6 min')
+            time.sleep(6*60)
             yield scrapy.Request(self.data_list_url.format(page=1), callback=self.parse, dont_filter=True) 
         
     def parse_detail(self, response):
@@ -113,5 +130,15 @@ class SpiderSpider(scrapy.Spider):
         item['TValue3'] = TValue3
         # print(item)
         yield item
+        # data = {
+        #     "points":item["points"], 
+        #     "TABLE":  TABLE,
+        #     "RecordID": item["RecordID"]
+        # }
+        # json_data = json.dumps(data)
+        # # response = requests.post(post_img_url, data=json_data)
+        # # if response.status_code != 200:
+        # #     print("cannot upload img"+ str(item['RecordID'])) 
+        # yield scrapy.Request(post_img_url, method='POST', body=json_data)
 
         

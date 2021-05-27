@@ -1,3 +1,6 @@
+import os
+import configparser
+import pathlib
 # Scrapy settings for pachong project
 #
 # For simplicity, this file contains only settings considered important or
@@ -7,13 +10,18 @@
 #     https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 #     https://docs.scrapy.org/en/latest/topics/spider-middleware.html
 # mongodb settings
-DB = 'test'
-TABLE = 'helmen'
-LOG_LEVEL = 'ERROR'
-IMG_SAVE_PATH = './'
+current_parent_dir = pathlib.Path(__file__).parent.parent.absolute()
+CONFIG_FILE_PATH = os.path.join(current_parent_dir, 'conf.ini')
+config = configparser.ConfigParser()
+config.read(CONFIG_FILE_PATH)
+TABLE = config.get('database', 'TABLE')
+DB = config.get('database', 'DB')
+IMG_SAVE_PATH = config.get('image', 'IMG_SAVE_PATH')
+LOG_LEVEL = 'INFO'
+
 BOT_NAME = 'pachong'
 
-MAX_PAGE = 10
+MAX_PAGE = 5 
 SPIDER_MODULES = ['pachong.spiders']
 NEWSPIDER_MODULE = 'pachong.spiders'
 
