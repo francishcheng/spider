@@ -71,7 +71,7 @@ while True:
     l = []
     msg = ''
     now = dt.now()
-    five_mins_ago = now + datetime.timedelta(minutes=-8)
+    five_mins_ago = now + datetime.timedelta(minutes=-6)
     query = {"create_time": {"$gt":five_mins_ago, "$lt":now}}
     items = table.find(query)
     
@@ -95,8 +95,9 @@ while True:
             msg += '判断结果:' + judge_res  
     print('messagea:')
     print(msg)
+    print("sleep 5  mins")
+    time.sleep(5 * 60)
     response = dingtalk.msg(msg)
     print(response.text)
-    print("sleep 7  mins")
-    time.sleep(7 * 60)
+    
      

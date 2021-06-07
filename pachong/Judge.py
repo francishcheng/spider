@@ -220,7 +220,7 @@ def judge_func(curve2, Ce, C_ygz, xm):
         
         
             if sit[j][sit_C[int(ce-1)]]>0: #怕没有sit
-                if (np.mean(curveToOne2[ck[int(ce-2)][0]+30:ck[int(ce-2)][1]-30,j])<0.3) | ((F[j][0]==2) & (np.mean(curveToOne2[ck[3][0]+30:ck[3][1]-30,j])<0.3)):                               
+                if (np.mean(curveToOne2[ck[int(ce-1)][0]+30:ck[int(ce-1)][1]-30,j])<0.3) | ((F[j][0]==2) & (np.mean(curveToOne2[ck[3][0]+30:ck[3][1]-30,j])<0.3)):                               
                     reason[j][5]=1;#第六关卡；中间要低,平均不能超过0.3
             
         

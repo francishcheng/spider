@@ -2,9 +2,43 @@ from django.shortcuts import render
 from django.http import HttpResponse
 import pymongo
 import os
+import datetime 
+from datetime import datetime as dt
+from collections import defaultdict
 import configparser
 import pathlib
 # Create your views here.
+class ProvinceHandler:
+    def __init__(self):
+        self.equips = set()
+        self.yin = 0
+        self.yang = 0
+        self.wu = 0
+    def __str__(self):
+        # return  str(self.yin) + "  " + str(self.yang) + "  " + str(self.wu) + '\n' #+ str(len(self.equips))  + '\n' + str(self.equips)
+        return str(len(self.equips)) + '|' + str(self.yin) + '|' + str(self.yang) + '|' + str(self.wu) + '|' + str(self.yin+self.yang+self.wu) + '|'
+
+
+class BatchHandler:
+    def __init__(self):
+        self.yin = 0
+        self.yang = 0
+        self.wu = 0
+    
+    def __str__(self):
+        return str(self.yin) + '|' + str(self.yang) + '|' + str(self.wu) + '|' + str(self.wu+self.yang+self.yin) + '|' + '\n'
+
+
+def yin_yang(item):
+    conclusions = []
+    conclusions.append(item['conclusion1'])
+    conclusions.append(item['conclusion2'])
+    conclusions.append(item['conclusion3'])
+    if '阳性' in conclusions:
+        return '阳'
+    if '无效' in conclusions:
+        return '无'
+    return '阴' 
 def download_view(request):
     current_parent_dir = pathlib.Path(__file__).parent.parent.parent.absolute()
     CONFIG_FILE_PATH = os.path.join(current_parent_dir, 'conf.ini')
@@ -71,3 +105,96 @@ def download_view(request):
     return response
 def index_view(request):
     return HttpResponse('<a href="/download" > <button>下载</button></a>')
+
+def week_view(request, collection_name):
+    current_parent_dir = pathlib.Path(__file__).parent.parent.parent.absolute()
+    CONFIG_FILE_PATH = os.path.join(current_parent_dir, 'conf.ini')
+    config = configparser.ConfigParser()
+    config.read(CONFIG_FILE_PATH)
+    TABLE = config.get('database', 'TABLE')
+    client = pymongo.MongoClient('localhost')
+    DB = config.get('database', 'DB')
+    db = client[DB]
+    collections = db.list_collection_names()
+    collection_name = collection_name if collection_name!='' else collections[0]
+    print(collection_name)
+
+    table = db[collection_name]
+
+    now = dt.now()
+    one_week_ago = now + datetime.timedelta(weeks=-1)
+    query = {"create_time": {"$gt":one_week_ago, "$lt":now}}
+    items = table.find(query)
+
+    d = defaultdict(ProvinceHandler)
+    for item in items:
+        item = dict(item)
+        if item['address'] == '':
+            continue
+        province = item['address'].split()[0]
+        conclusion = yin_yang(item)
+        # print(conclusion)
+        # d[province][conclusion] += 1
+        
+        d[province].equips.add(item['SNcode'])
+
+        if conclusion == '阴性':
+            d[province].yin += 1
+        elif conclusion == '阳性':
+            d[province].yang += 1
+        else:
+            d[province].wu += 1
+
+    province_msg = '| 序号 | 省份 | 设备数 | 阴性数 | 阳性数 | 无效数 | 检测总量 |\n| ---- | ---- | ------ | ------ | ------ | ------ | -------- |\n'
+    total = [0] * 6
+    for index, key in enumerate(d.keys()) :
+        province_msg += '|' + str(index+1) + '|' + str(key) + '|' + str(d[key]) + '\n'
+        # print(index, key, d[key], sep='\t')
+        total[1] += len(d[key].equips)
+        total[2] += d[key].yin
+        total[3] += d[key].yang
+        total[4] += d[key].wu
+    total[5] = sum(total[:-1])
+    province_msg += '| 合计 |/|' + '|'.join([str(i) for i in total]) + '|'
+    print(province_msg)
+    now = dt.now()
+    one_week_ago = now + datetime.timedelta(weeks=-1)
+    query = {"create_time": {"$gt":one_week_ago, "$lt":now}}
+    items = table.find(query)
+
+    d_batch = defaultdict(BatchHandler)
+    for item in items:
+        item = dict(item)
+        if item['sBatchCode'] == '':
+            continue
+        batch = item['sBatchCode']
+        conclusion = yin_yang(item)
+
+
+        if conclusion == '阴性':
+            d_batch[batch].yin += 1
+        elif conclusion == '阳性':
+            d_batch[batch].yang += 1
+        else:
+            d_batch[batch].wu += 1
+
+    batch_msg = '| 批次号 | 阴性数 | 阳性数 | 无效数 | 检测总量 |\n| ---- | ---- | ------ | ------ | ------  |\n ' 
+    total = [0] * 4
+    for key in d_batch.keys():
+        # print(key)
+        # print(d_batch[key])
+        batch_msg += '|' + str(key) + '|' + str(d_batch[key].yin) + '|' +  str(d_batch[key].yang) + '|' +  str(d_batch[key].wu) + '|' + str( d_batch[key].wu +  d_batch[key].yang + d_batch[key].yin) + '|\n' 
+        total[0] += d_batch[key].yin
+        total[1] += d_batch[key].yang
+        total[2] += d_batch[key].wu
+    total[3] = sum(total[:-1])
+    batch_msg += '| 总计|' + '|'.join([str(i) for i in total]) + '|'
+    print(batch_msg)
+
+    contest = {
+        'collection_name': collection_name,
+        'collections' : collections,
+        'province_msg': province_msg,
+        'batch_msg': batch_msg,
+    }
+    return render(request, 'week.html', contest)
